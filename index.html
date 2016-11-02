@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="utf-8">
   <title>This is your life 😱</title>
@@ -8,57 +7,54 @@
   <meta property="og:description" content="Visualize your life in a single picture 😱" />
   <meta property="og:image" content="https://fgribreau.github.io/this-is-your-life/logo.png" />
   <meta property="og:url" content="https://fgribreau.github.io/this-is-your-life/" />
-
   <meta name="twitter:title" content="This is your life." />
   <meta name="twitter:description" content="Visualize your life in a single picture 😱" />
   <meta name="twitter:image" content="https://fgribreau.github.io/this-is-your-life/logo.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@fgribreau" />
   <style media="screen">
-    body {
-      background-color: #fefefe;
-    }
+    body {background-color: #fefefe;}
 
-    * {
+    #life, #life *{
       padding: 0;
       margin: 0;
       text-align: center;
       color: #333;
       font-family: monospace;
       font-size: 1.4rem;
-      line-height: 1.9rem;
+      line-height: 2.4rem;
     }
 
-    p {
-      padding: 10px;
-    }
-
-    canvas {
+    #life canvas {
       display: block;
       margin: 0 auto;
     }
+
+    .share {padding-top:10%;text-align: center;}
+    .share > * {display: inline-block;vertical-align: top;}
   </style>
 </head>
 
 <body>
-  <p>
-    Hi
-    <input onkeyup="render()" onchange="render()" class="state-js" type="text" data-bind-value="name" value="François-Guillaume">, you were born on
-    <input onkeyup="render()" onchange="render()" class="state-js" type="date" data-bind-value="birthday" value="1989-07-02" />.
-  </p>
-  <p>
-    Considering you will die at
-    <input onclick="render()" onkeyup="render()" onchange="render()" class="state-js" type="number" data-bind-value="dieInYears" data-set-min="age" min="0" max="110" step="5" value="90" />, you still have
-    <span class="state-js" data-bind-inner-Text="remaining">?</span> remaining
-    <select onchange="render()" class="state-js" data-bind-value="scope">
+  <div id="life">
+    <p>
+      Hi
+      <input onkeyup="render()" onchange="render()" class="state-js" type="text" data-bind-value="name" value="François-Guillaume">, you were born on
+      <input onkeyup="render()" onchange="render()" class="state-js" type="date" data-bind-value="birthday" value="1989-07-02" />.
+    </p>
+    <p>
+      Considering you will die at
+      <input onclick="render()" onkeyup="render()" onchange="render()" class="state-js" type="number" data-bind-value="dieInYears" data-set-min="age" min="0" max="110" step="5" value="90" />, you still have
+      <span class="state-js" data-bind-inner-Text="remaining">?</span> remaining
+      <select onchange="render()" class="state-js" data-bind-value="scope">
       <option value='{"unit": "days", "columns": 365, "tickSize": 3, "padding": 0, "hasStroke":false}'>days</option>
       <option selected="selected" value='{"unit": "weeks", "columns": 52, "tickSize": 7, "padding": 1, "hasStroke":true}'>weeks</option>
       <option value='{"unit": "months", "columns": 24, "tickSize": 10, "padding": 1, "hasStroke":true}'>months</option>
       <option value='{"unit": "years", "columns": 10, "tickSize": 25, "padding": 1, "hasStroke":true}'>years</option>
     </select> to live.
-  </p>
-  <p>This is your life.</p>
-  <div id="life"></div>
+    </p>
+    <p>This is your life.</p>
+  </div>
   <script type="text/javascript" src="moment.js"></script>
   <script type="text/javascript" src="lodash.js"></script>
   <script type="text/javascript">
@@ -183,23 +179,22 @@
     render(load());
   </script>
 
-  <a class="twitter-share-button" href="https://twitter.com/intent/tweet?text=This is my life" url data-size="large">Tweet</a>
+  <div class="share">
+    <a href="https://twitter.com/share" class="twitter-share-button" data-size="large" data-text="This is your life" data-url="https://fgribreau.github.io/this-is-your-life/" data-related="FGRibreau,Redsmin" data-show-count="false">Tweet</a>
+    <div class="fb-share-button" data-href="https://fgribreau.github.io/this-is-your-life" data-layout="button" data-size="large" data-mobile-iframe="true"><a class="fb-xfbml-parse-ignore" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Ffgribreau.github.io%2Fthis-is-your-life&amp;src=sdkpreparse">Share</a></div>
+  </div>
 
+  <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+  <div id="fb-root"></div>
   <script>
-    window.twttr = (function(d, s, id) {
-      var js, fjs = d.getElementsByTagName(s)[0],
-        t = window.twttr || {};
-      if (d.getElementById(id)) return t;
+    (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
       js = d.createElement(s);
       js.id = id;
-      js.src = "https://platform.twitter.com/widgets.js";
+      js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.8";
       fjs.parentNode.insertBefore(js, fjs);
-      t._e = [];
-      t.ready = function(f) {
-        t._e.push(f);
-      };
-      return t;
-    }(document, "script", "twitter-wjs"));
+    }(document, 'script', 'facebook-jssdk'));
   </script>
 </body>
 
