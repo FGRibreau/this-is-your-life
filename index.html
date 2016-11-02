@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>This is your life</title>
+  <meta property="og:title" content="This is your life" />
+  <meta property="og:description" content="Vizualize your life in a simple picture" />
+  <meta property="og:image" content="https://fgribreau.github.io/this-is-your-life/logo.png" />
+  <meta property="og:url" content="https://fgribreau.github.io/this-is-your-life" />
+
+  <meta name="twitter:title" content="This is your life" />
+  <meta name="twitter:description" content="Vizualize your life in a simple picture" />
+  <meta name="twitter:image" content="https://fgribreau.github.io/this-is-your-life/logo.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@fgribreau" />
+  <style media="screen">
+    body {
+      background-color: #fefefe;
+    }
+
+    * {
+      padding: 0;
+      margin: 0;
+      text-align: center;
+      color: #333;
+      font-family: monospace;
+      font-size: 1.4rem;
+      line-height: 1.9rem;
+    }
+
+    p {
+      padding: 10px;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+  <p>
+    Hi
+    <input onkeyup="render()" onchange="render()" class="state-js" type="text" data-bind-value="name" value="François-Guillaume">, you were born on
+    <input onkeyup="render()" onchange="render()" class="state-js" type="date" data-bind-value="birthday" value="1989-07-02" />.
+  </p>
+  <p>
+    Considering you will die at
+    <input onclick="render()" onkeyup="render()" onchange="render()" class="state-js" type="number" data-bind-value="dieInYears" data-set-min="age" min="0" max="110" step="5" value="90" />, you still have
+    <span class="state-js" data-bind-inner-Text="remaining">?</span> remaining
+    <select onchange="render()" class="state-js" data-bind-value="scope">
+      <option value='{"unit": "days", "columns": 365, "tickSize": 3, "padding": 0, "hasStroke":false}'>days</option>
+      <option selected="selected" value='{"unit": "weeks", "columns": 52, "tickSize": 7, "padding": 1, "hasStroke":true}'>weeks</option>
+      <option value='{"unit": "months", "columns": 24, "tickSize": 10, "padding": 1, "hasStroke":true}'>months</option>
+      <option value='{"unit": "years", "columns": 10, "tickSize": 25, "padding": 1, "hasStroke":true}'>years</option>
+    </select> to live.
+  </p>
+  <p>This is your life:</p>
+  <div id="life"></div>
+  <script type="text/javascript" src="moment.js"></script>
+  <script type="text/javascript" src="lodash.js"></script>
+  <script type="text/javascript">
+    const {
+      flow,
+      tap,
+      toNumber,
+      partialRight,
+      keys,
+      first,
+      assign,
+      get,
+      startsWith,
+      camelCase,
+      reduce,
+      forEach
+    } = _;
+
+    // View Management
+    const getElements = () => Array.from(document.querySelectorAll('.state-js'));
+
+    // State Management
+    const getState = () => getElements().reduce((s, el) => {
+      return reduce(el.dataset, (s, v, k) => {
+        if (startsWith(k, 'bind')) {
+          s[el.dataset[k]] = el[camelCase(k.replace('bind', ''))];
+        }
+        return s;
+      }, s);
+    }, {});
+
+    const applyState = (state) => getElements().forEach(el => forEach(el.dataset, (s, v, k) => el[camelCase(v.replace('bind', '').replace('set', ''))] = state[k[v]]))
+
+    // LocalStorage
+    const save = (state) => localStorage.setItem('life', JSON.stringify(state))
+    const load = () => JSON.parse((location.hash ? location.hash.slice(1) : null) || localStorage.getItem('life')) // URL as precedence over localStorage
+
+    // Router
+    const routerSave = (state) => history.pushState(state, `${state.name} life in ${state.unit}`, location.pathname + '#' + JSON.stringify(state))
+
+    // Controller
+    const render = (state) => flow(model, partialRight(tap, view), partialRight(tap, save), partialRight(tap, routerSave), applyState)(state || getState());
+
+    // Model
+    function model(state) {
+      const [year, month, day] = state.birthday.split('-').map(toNumber);
+      const birthday = moment(new Date(year, month - 1, day));
+
+      _.reduce(JSON.parse(state.scope), (state, value, key) => {
+        state[key] = value;
+        return state;
+      }, state);
+
+      state.elapsed = moment().diff(birthday, state.unit); // now - birthday
+      state.age = moment().diff(birthday, 'years');
+      state.total = birthday.clone().add(state.dieInYears, 'years').diff(birthday, state.unit);
+      state.elapsedPercent = Math.round((state.elapsed / state.total) * 1000) / 10;
+      state.remaining = state.total - state.elapsed;
+      return state;
+    }
+
+    function view({
+      elapsed,
+      total,
+      columns,
+      tickSize,
+      padding,
+      hasStroke
+    }) {
+      const [PAPER_PADDING_LEFT, PAPER_PADDING_TOP] = [10, 10];
+      const TICK_SIZE = tickSize;
+      const TICK_BORDER_WIDTH = 0;
+      const PADDING = 0;
+
+      // find number of columns
+      const COLUMNS = columns; // unit= SCOPE
+      const rows = total / COLUMNS;
+      const chunks = _.chunk(_.range(0, total).map(day => day < elapsed), COLUMNS);
+
+      const life = document.getElementById('life');
+      const oldCanvas = document.querySelector('canvas');
+      oldCanvas && life.removeChild(oldCanvas);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = colToPx(COLUMNS);
+      canvas.height = colToPx(chunks.length);
+      const ctx = canvas.getContext('2d');
+      life.appendChild(canvas);
+
+      function colToPx(column) {
+        return PAPER_PADDING_LEFT + (column * (TICK_SIZE + PADDING + TICK_BORDER_WIDTH * 2));
+      }
+
+      function rowToPx(row) {
+        return PAPER_PADDING_TOP + (row * (TICK_SIZE + PADDING + TICK_BORDER_WIDTH * 2));
+      }
+
+      function tick(ctx, x, y, r) {
+        ctx.rect(colToPx(x) - (r / 2), rowToPx(y) - (r / 2), r, r); // left, top, width, height
+      }
+
+      const lerp = (v0, v1, t) => (1 - t) * v0 + t * v1;
+
+      chunks.forEach((cells, row) => {
+        cells.forEach((isPast, column) => {
+          ctx.beginPath();
+          tick(ctx, column, row, TICK_SIZE);
+          const t = ((row * COLUMNS + column) / elapsed);
+          ctx.fillStyle = isPast ? `hsl(203, 100%, ${lerp(29, 80, 1-t)}%)` : '#fff';
+          ctx.lineWidth = 1;
+          ctx.fill();
+          ctx.strokeStyle = isPast ? (hasStroke ? '#fff' : ctx.fillStyle) : '#ddd';
+          ctx.stroke();
+        });
+      });
+    }
+
+    // init router
+    window.onpopstate = flow(partialRight(get, 'state'), render);
+
+    // init app
+    render(load());
+  </script>
+
+  <a class="twitter-share-button" href="https://twitter.com/intent/tweet?text=This is my life" url data-size="large">Tweet</a>
+
+  <script>
+    window.twttr = (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0],
+        t = window.twttr || {};
+      if (d.getElementById(id)) return t;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = "https://platform.twitter.com/widgets.js";
+      fjs.parentNode.insertBefore(js, fjs);
+      t._e = [];
+      t.ready = function(f) {
+        t._e.push(f);
+      };
+      return t;
+    }(document, "script", "twitter-wjs"));
+  </script>
+</body>
+
+</html>
