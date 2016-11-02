@@ -90,10 +90,10 @@
 
     // LocalStorage
     const save = (state) => localStorage.setItem('life', JSON.stringify(state))
-    const load = () => JSON.parse((location.hash ? location.hash.slice(1) : null) || localStorage.getItem('life')) // URL as precedence over localStorage
+    const load = () => JSON.parse((location.hash ? atob(location.hash.slice(1)) : null) || localStorage.getItem('life')) // URL as precedence over localStorage
 
     // Router
-    const routerSave = (state) => history.pushState(state, `${state.name} life in ${state.unit}`, location.pathname + '#' + JSON.stringify(state))
+    const routerSave = (state) => history.pushState(state, `${state.name} life in ${state.unit}`, location.pathname + '#' + btoa(JSON.stringify(state)))
 
     // Controller
     const render = (state) => flow(model, partialRight(tap, view), partialRight(tap, save), partialRight(tap, routerSave), applyState)(state || getState());
